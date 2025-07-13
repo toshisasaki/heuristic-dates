@@ -1,15 +1,15 @@
 use chrono::{NaiveDate, NaiveDateTime};
 use clap::Parser;
-use exif::{Reader, Tag, Value};
 use filetime::{FileTime, set_file_times};
+use exif::{In, Reader, Tag, Value};
 use log::{info, warn};
 use regex::Regex;
 use std::fs;
 use std::fs::File;
-use std::io::BufReader;
 use std::process::Command;
 use walkdir::WalkDir;
 use std::path::Path;
+use pretty_env_logger;
 
 /// Command line arguments
 #[derive(Parser, Debug)]
@@ -104,27 +104,27 @@ fn main() {
         if fname.to_lowercase().ends_with(".jpg") && date != "unknown" {
             let file_handle = File::open(&file);
             if let Ok(fh) = file_handle {
-                let mut buf_reader = BufReader::new(fh);
+                let mut buf_reader = std::io::BufReader::new(fh);
                 let exifreader = Reader::new();
                 let exif = exifreader.read_from_container(&mut buf_reader);
                 if let Ok(exif) = exif {
                     let exif_date = exif
-                        .get_field(Tag::DateTimeOriginal, exif::In::PRIMARY)
+                        .get_field(Tag::DateTimeOriginal, In::PRIMARY)
                         .and_then(|field| match &field.value {
                             Value::Ascii(vec) if !vec.is_empty() => {
                                 let s = String::from_utf8_lossy(&vec[0]);
-                                NaiveDateTime::parse_from_str(&s, "%Y:%m:%d %H:%M:%S").ok()
+                                chrono::NaiveDateTime::parse_from_str(&s, "%Y:%m:%d %H:%M:%S").ok()
                             }
                             _ => None,
                         });
                     let parsed_date = if time != "unknown" {
-                        NaiveDateTime::parse_from_str(
+                        chrono::NaiveDateTime::parse_from_str(
                             &format!("{} {}", date, time),
                             "%Y%m%d %H%M%S",
                         )
                         .ok()
                     } else {
-                        NaiveDate::parse_from_str(&date, "%Y%m%d")
+                        chrono::NaiveDate::parse_from_str(&date, "%Y%m%d")
                             .ok()
                             .and_then(|d| d.and_hms_opt(0, 0, 0))
                     };
