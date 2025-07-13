@@ -1,0 +1,14 @@
+[package]
+name = "heuristic-dates"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+exif = "0.7"
+filetime = "0.2"
+walkdir = "2.3"
+log = "0.4"
+chrono = { version = "0.4", features = ["serde"] }
+serde = { version = "1.0", features = ["derive"] }
+clap = { version = "4.5", features = ["derive"] }
+regex = "1.10"

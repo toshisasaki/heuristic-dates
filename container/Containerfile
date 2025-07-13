@@ -1,0 +1,24 @@
+# Build stage
+FROM quay.io/fedora/fedora-minimal:42 AS builder
+
+# Install build dependencies
+RUN microdnf install -y git rust cargo
+
+# Clone the repository
+WORKDIR /src
+RUN git clone https://github.com/toshisasaki/heuristic-dates.git .
+
+# Build the application
+RUN cargo build --release
+
+# Final image
+FROM quay.io/fedora/fedora-minimal:42
+
+# Install runtime dependencies
+RUN microdnf install -y exiftool
+
+# Copy the built binary
+COPY --from=builder /src/target/release/heuristic-dates /usr/bin/heuristic-dates
+
+# Set entrypoint
+ENTRYPOINT ["/usr/bin/heuristic-dates"]
