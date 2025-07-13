@@ -42,6 +42,7 @@ fn main() {
     let vid_pattern = Regex::new(r"^VID_(\d{8})_(\d{6})\d*\.mp4$").unwrap();
     let img_date_only_pattern = Regex::new(r"^IMG-(\d{8})-WA\d+\.jpg$").unwrap();
     let img_with_trailing_pattern = Regex::new(r"^IMG_(\d{8})_(\d{6})\d*.*\.jpg$").unwrap();
+    let screenshot_pattern = Regex::new(r"^Screenshot_(\d{8})-(\d{6})\.jpg$").unwrap();
 
     let mut matched_files = Vec::new();
     for entry in WalkDir::new(&args.input).into_iter().filter_map(|e| e.ok()) {
@@ -50,7 +51,8 @@ fn main() {
             // Only match files with a date in the name
             let is_img_with_date = img_pattern.is_match(&fname)
                 || img_date_only_pattern.is_match(&fname)
-                || img_with_trailing_pattern.is_match(&fname);
+                || img_with_trailing_pattern.is_match(&fname)
+                || screenshot_pattern.is_match(&fname);
             let is_vid_with_date = vid_pattern.is_match(&fname);
             if is_img_with_date || is_vid_with_date {
                 matched_files.push(entry.path().display().to_string());
@@ -67,37 +69,19 @@ fn main() {
         let mut date = "unknown".to_string();
         let mut time = "unknown".to_string();
         if let Some(caps) = img_pattern.captures(&fname) {
-            date = caps
-                .get(1)
-                .map(|m| m.as_str().to_string())
-                .unwrap_or(date.clone());
-            time = caps
-                .get(2)
-                .map(|m| m.as_str().to_string())
-                .unwrap_or(time.clone());
+            date = caps.get(1).map(|m| m.as_str().to_string()).unwrap_or(date.clone());
+            time = caps.get(2).map(|m| m.as_str().to_string()).unwrap_or(time.clone());
         } else if let Some(caps) = img_with_trailing_pattern.captures(&fname) {
-            date = caps
-                .get(1)
-                .map(|m| m.as_str().to_string())
-                .unwrap_or(date.clone());
-            time = caps
-                .get(2)
-                .map(|m| m.as_str().to_string())
-                .unwrap_or(time.clone());
+            date = caps.get(1).map(|m| m.as_str().to_string()).unwrap_or(date.clone());
+            time = caps.get(2).map(|m| m.as_str().to_string()).unwrap_or(time.clone());
         } else if let Some(caps) = vid_pattern.captures(&fname) {
-            date = caps
-                .get(1)
-                .map(|m| m.as_str().to_string())
-                .unwrap_or(date.clone());
-            time = caps
-                .get(2)
-                .map(|m| m.as_str().to_string())
-                .unwrap_or(time.clone());
+            date = caps.get(1).map(|m| m.as_str().to_string()).unwrap_or(date.clone());
+            time = caps.get(2).map(|m| m.as_str().to_string()).unwrap_or(time.clone());
         } else if let Some(caps) = img_date_only_pattern.captures(&fname) {
-            date = caps
-                .get(1)
-                .map(|m| m.as_str().to_string())
-                .unwrap_or(date.clone());
+            date = caps.get(1).map(|m| m.as_str().to_string()).unwrap_or(date.clone());
+        } else if let Some(caps) = screenshot_pattern.captures(&fname) {
+            date = caps.get(1).map(|m| m.as_str().to_string()).unwrap_or(date.clone());
+            time = caps.get(2).map(|m| m.as_str().to_string()).unwrap_or(time.clone());
         }
         println!("File: {} | Date: {} | Time: {}", fname, date, time);
 
