@@ -10,6 +10,7 @@ use std::process::Command;
 use walkdir::WalkDir;
 use std::path::Path;
 use pretty_env_logger;
+use rayon::prelude::*;
 
 /// Command line arguments
 #[derive(Parser, Debug)]
@@ -57,8 +58,9 @@ fn main() {
         }
     }
     println!("Matched files:");
-    for file in matched_files {
-        let fname = std::path::Path::new(&file)
+    // Use rayon for parallel file processing
+    matched_files.par_iter().for_each(|file| {
+        let fname = std::path::Path::new(file)
             .file_name()
             .map(|f| f.to_string_lossy())
             .unwrap_or_default();
@@ -99,7 +101,6 @@ fn main() {
         }
         println!("File: {} | Date: {} | Time: {}", fname, date, time);
 
-        let mut was_modified = false;
         // Only process JPG files for EXIF
         if fname.to_lowercase().ends_with(".jpg") && date != "unknown" {
             let file_handle = File::open(&file);
@@ -131,7 +132,6 @@ fn main() {
                     match (parsed_date, exif_date) {
                         (Some(parsed), Some(exif_dt)) => {
                             if parsed < exif_dt {
-                                was_modified = true;
                                 if args.dry_run {
                                     info!(
                                         "[DRY RUN] Would modify EXIF date for file: {} from {} to {}",
@@ -173,7 +173,6 @@ fn main() {
                             .and_then(|d| d.and_hms_opt(0, 0, 0))
                     };
                     if let Some(parsed) = parsed_date {
-                        was_modified = true;
                         if args.dry_run {
                             info!(
                                 "[DRY RUN] Would set file creation time for file: {} to {}",
@@ -210,7 +209,7 @@ fn main() {
                 }
             }
         }
-    }
+    });
 }
 
 fn set_exif_date(file_path: &str, new_date: NaiveDateTime) -> Result<(), String> {
