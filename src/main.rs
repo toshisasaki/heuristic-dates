@@ -198,17 +198,15 @@ fn main() {
                 warn!("Could not open file: {}", file);
             }
         }
-        // Move modified files to output directory if specified
-        if was_modified {
-            if let Some(ref out_dir) = args.output {
-                let out_path = Path::new(out_dir).join(fname.as_ref());
-                if args.dry_run {
-                    info!("[DRY RUN] Would move file: {} to {}", file, out_path.display());
-                } else {
-                    match fs::rename(&file, &out_path) {
-                        Ok(_) => info!("Moved file: {} to {}", file, out_path.display()),
-                        Err(e) => warn!("Failed to move file: {} to {}: {}", file, out_path.display(), e),
-                    }
+        // Move all processed files to output directory if specified and not in dry-run mode
+        if let Some(ref out_dir) = args.output {
+            let out_path = Path::new(out_dir).join(fname.as_ref());
+            if args.dry_run {
+                info!("[DRY RUN] Would move file: {} to {}", file, out_path.display());
+            } else {
+                match fs::rename(&file, &out_path) {
+                    Ok(_) => info!("Moved file: {} to {}", file, out_path.display()),
+                    Err(e) => warn!("Failed to move file: {} to {}: {}", file, out_path.display(), e),
                 }
             }
         }
